@@ -4,7 +4,6 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Your secure credentials
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or "8996950974:AAEX0fr9WLs7iN-zm4knOqQMCFG5SLWLhiA"
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
 
@@ -23,10 +22,7 @@ def telegram_webhook():
         chat_id = update["message"]["chat"]["id"]
         user_message = update["message"]["text"]
         
-        # Call Groq AI API
         ai_reply = ask_groq(user_message)
-        
-        # Send reply back to Telegram
         send_telegram_message(chat_id, ai_reply)
         
     return "OK", 200
@@ -44,14 +40,20 @@ def ask_groq(prompt):
         ]
     }
     try:
-        response = requests.post(GROQ_API_URL, json=payload, headers=headers, timeout=10)
+        response = requests.post(GROQ_API_URL, json=payload, headers=headers, timeout=15)
         data = response.json()
+        
+        # Check if Groq returned choices
         if "choices" in data and len(data["choices"]) > 0:
             return data["choices"][0]["message"]["content"]
+        else:
+            # Print error response to Render logs for debugging
+            print(f"Groq API Error Response: {data}")
+            return f"Groq Error: {data.get('error', {}).get('message', 'Unknown error')}"
+            
     except Exception as e:
-        print(f"Groq Error: {e}")
-    
-    return "Oops! I encountered an error talking to my AI brain. ⚠️"
+        print(f"Connection Exception: {e}")
+        return f"Failed to connect to Groq API: {e}"
 
 def send_telegram_message(chat_id, text):
     url = f"{TELEGRAM_API_URL}/sendMessage"
