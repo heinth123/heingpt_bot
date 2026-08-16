@@ -7,14 +7,13 @@ app = Flask(__name__)
 # Your secure Telegram Bot Token
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or "8996950974:AAEX0fr9WLs7iN-zm4knOqQMCFG5SLWLhiA"
 
-# PASTE YOUR FRESH GROQ API KEY INSIDE THE QUOTES BELOW:
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
+# PASTE YOUR FRESH GROQ API KEY INSIDE THE QUOTES BELOW LOCALLY:
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "PASTE_YOUR_FRESH_GROQ_KEY_HERE"
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Dictionary to store conversation history per chat_id
-# Format: { chat_id: [ {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}, ... ] }
+# Dictionary to store conversation history per chat_id (Short-term memory)
 chat_histories = {}
 
 @app.route('/')
@@ -38,9 +37,8 @@ def telegram_webhook():
         # Add user message to history
         chat_histories[chat_id].append({"role": "user", "content": user_message})
         
-        # Keep only the last 10 messages so it doesn't get overloaded (memory window)
-        if len(chat_histories[chat_id]) > 11: # 1 system prompt + 10 chat messages
-            # Keep system prompt at index 0, and slice the latest 10 messages
+        # Keep only the last 10 messages so it stays fast and focused
+        if len(chat_histories[chat_id]) > 11:
             chat_histories[chat_id] = [chat_histories[chat_id][0]] + chat_histories[chat_id][-10:]
         
         # Call Groq AI with the full history
