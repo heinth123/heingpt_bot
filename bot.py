@@ -8,7 +8,7 @@ app = Flask(__name__)
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or "8996950974:AAEX0fr9WLs7iN-zm4knOqQMCFG5SLWLhiA"
 
 # PASTE YOUR FRESH GROQ API KEY INSIDE THE QUOTES BELOW:
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "8996950974:AAEX0fr9WLs7iN-zm4knOqQMCFG5SLWLhiA"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
