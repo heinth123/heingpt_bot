@@ -4,13 +4,16 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Your secure Telegram Bot Token
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or "8996950974:AAEX0fr9WLs7iN-zm4knOqQMCFG5SLWLhiA"
+# List of all your Telegram Bot Tokens (Add as many as you want here!)
+TELEGRAM_TOKENS = [
+    os.environ.get("TELEGRAM_BOT_TOKEN") or "8996950974:AAEX0fr9WLs7iN-zm4knOqQMCFG5SLWLhiA",
+    # Add your second bot token here when you make it:
+    # "ANOTHER_BOT_TOKEN_HERE"
+]
 
-# PASTE YOUR FRESH GROQ API KEY INSIDE THE QUOTES BELOW LOCALLY:
+# PASTE YOUR BRAND NEW GROQ API KEY INSIDE THE QUOTES BELOW:
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
 
-TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # Dictionary to store conversation history per chat_id (Short-term memory)
@@ -18,10 +21,15 @@ chat_histories = {}
 
 @app.route('/')
 def home():
-    return "🤖 Telegram AI Bot with Memory is alive and running!"
+    return "🤖 Multi-Bot Telegram AI is alive and running!"
 
-@app.route(f"/{TELEGRAM_BOT_TOKEN}", methods=['POST'])
-def telegram_webhook():
+# Dynamic route that catches updates for ANY of your bot tokens
+@app.route("/<token>", methods=['POST'])
+def telegram_webhook(token):
+    # Verify the token is one of ours for security
+    if token not in TELEGRAM_TOKENS:
+        return "Unauthorized", 403
+        
     update = request.get_json()
     
     if "message" in update and "text" in update["message"]:
@@ -47,8 +55,8 @@ def telegram_webhook():
         # Add AI response to history
         chat_histories[chat_id].append({"role": "assistant", "content": ai_reply})
         
-        # Send reply back to Telegram
-        send_telegram_message(chat_id, ai_reply)
+        # Send reply back using the specific bot token that received the message
+        send_telegram_message(token, chat_id, ai_reply)
         
     return "OK", 200
 
@@ -58,7 +66,7 @@ def ask_groq(messages_history):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "messages": messages_history
     }
     try:
@@ -75,8 +83,8 @@ def ask_groq(messages_history):
         print(f"Connection Exception: {e}")
         return f"Failed to connect to Groq API: {e}"
 
-def send_telegram_message(chat_id, text):
-    url = f"{TELEGRAM_API_URL}/sendMessage"
+def send_telegram_message(token, chat_id, text):
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": text
